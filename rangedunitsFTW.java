@@ -1,4 +1,4 @@
-package MyBot;
+package HSBot;
 
 import CustomUnitClasses.AbstractionLayerAI;
 import ai.abstraction.pathfinding.AStarPathFinding;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class MyBot extends AbstractionLayerAI {
+public class HSBot extends AbstractionLayerAI {
     
     private class Base {
         public Base() {
@@ -61,13 +61,14 @@ public class MyBot extends AbstractionLayerAI {
         }
 
         private UnitType chooseUnit() {
-            if (player.getResources() >= lightType.cost) { //only use lights and ranged
-                return lightType;
-            } else if (player.getResources() >= rangedType.cost) {
-                return rangedType;
-            }
+            // if (player.getResources() >= lightType.cost) { //only use lights and ranged
+            //     return lightType;
+            // } else if (player.getResources() >= rangedType.cost) {
+            //     return rangedType;
+            // }
+            return rangedType;
 
-            return lightType;
+            
         }
     }
 
@@ -163,16 +164,43 @@ public class MyBot extends AbstractionLayerAI {
     }
 
     private class Ranged {
+        private int groupSize = 4; // Number of ranged units per group
+        private int idleCounter = 0; // Counter to keep track of idle time
+        private boolean groupReady = false; // Flag to indicate if a group is ready to attack
+        private List<Unit> waitingRanged = new ArrayList<>(); // List to hold ranged units waiting at base
+    
         public Ranged() {
             playerRanged.forEach(ranged -> {
-                assignToAttack(ranged);
+                if (waitingRanged.size() < groupSize) {
+                    waitingRanged.add(ranged);
+                    assignToAttack(ranged);
+                    if (waitingRanged.size() == groupSize) {
+                        groupReady = true; // Once group size is reached, set the flag to true
+                    }
+                } else {
+                    assignToAttack(ranged); // If the group is ready, send units to attack
+                }
             });
+    
+            // If the group is ready and there are still units left, send them to attack
+            if (groupReady && !waitingRanged.isEmpty()) {
+                waitingRanged.forEach(this::assignToAttack);
+                waitingRanged.clear(); // Clear the waiting list after sending units to attack
+                groupReady = false; // Reset the group ready flag
+            }
+    
+            // If there are remaining units that haven't been assigned, keep them waiting
+            playerRanged.removeAll(waitingRanged);
         }
-
+    
         private void assignToAttack(Unit ranged) {
             Unit closestEnemy = findClosest(enemyUnits, ranged);
-            if (closestEnemy != null)
+            if (closestEnemy != null) {
                 attack(ranged, closestEnemy);
+            } else {
+                // If no enemy nearby, keep the unit waiting
+                waitingRanged.add(ranged);
+            }
         }
     }
 
@@ -307,11 +335,11 @@ public class MyBot extends AbstractionLayerAI {
         return List.of(new ParameterSpecification("PathFinding", PathFinding.class, pf));
     }
 
-    public MyBot(UnitTypeTable unitTypeTable) {
+    public HSBot(UnitTypeTable unitTypeTable) {
         this(unitTypeTable, new AStarPathFinding());
     }
 
-    public MyBot(UnitTypeTable unitTypeTable, PathFinding pathFinding) {
+    public HSBot(UnitTypeTable unitTypeTable, PathFinding pathFinding) {
         super(pathFinding);
         setUnitTypes(unitTypeTable);
     }
@@ -333,7 +361,7 @@ public class MyBot extends AbstractionLayerAI {
 
     @Override
     public AI clone() {
-        return new MyBot(unitTypeTable, pf);
+        return new HSBot(unitTypeTable, pf);
     }
 
     private class Board {
