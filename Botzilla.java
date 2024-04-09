@@ -1,4 +1,4 @@
-package HSBot;
+package Botzilla;
 
 import CustomUnitClasses.AbstractionLayerAI;
 import ai.abstraction.pathfinding.AStarPathFinding;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class HSBot extends AbstractionLayerAI {
+public class Botzilla extends AbstractionLayerAI {
     
     private class Base {
         public Base() {
