@@ -1,4 +1,4 @@
-package Botzilla;
+package HSBot;
 
 import CustomUnitClasses.AbstractionLayerAI;
 import ai.abstraction.pathfinding.AStarPathFinding;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class Botzilla extends AbstractionLayerAI {
+public class HSBot extends AbstractionLayerAI {
     
     private class Base {
         public Base() {
@@ -173,10 +173,10 @@ public class Botzilla extends AbstractionLayerAI {
             playerRanged.forEach(ranged -> {
                 if (waitingRanged.size() < groupSize) {
                     waitingRanged.add(ranged);
-                    assignToAttack(ranged);
-                    if (waitingRanged.size() == groupSize) {
-                        groupReady = true; // Once group size is reached, set the flag to true
-                    }
+                    Unit closestEnemy = findClosest(enemyUnits, ranged);
+                    if (waitingRanged.size() == groupSize || closestEnemy != null) {
+                        groupReady = true; // Once group size is reached, set the flag to true 
+                    } 
                 } else {
                     assignToAttack(ranged); // If the group is ready, send units to attack
                 }
