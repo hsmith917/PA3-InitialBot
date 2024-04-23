@@ -33,23 +33,19 @@ public class HSBot extends AbstractionLayerAI {
             if (currentBase == null)
                 return;
 
-            int desiredWorkers = findAdjacentCells(
-                    findUnitsWithin(resources, currentBase, (int) Math.floor(Math.sqrt(board.size))))
-                    .size();
-
-            boolean needsWorkers = (playerWorkers.size() < desiredWorkers
-                    || playerWorkers.size() <= enemyWorkers.size()) && playerWorkers.size() < 10;
-
-            // Make sure we can afford a barracks while maintaining a worker
-            boolean enoughResources = player
-                    .getResources() >= (currentBarracks == null ? barracksType.cost + workerType.cost
-                            : workerType.cost);
-
-            if ((needsWorkers && enoughResources)) {
+            // Ensure only one worker is trained
+            if (playerWorkers.size() < 1) {
                 train(currentBase, workerType);
             }
+
+            // Assign two workers to harvest
+            if (playerWorkers.size() < 2) {
+                while (workersIterator.hasNext() && playerWorkers.size() < 2) {
+                    Unit worker = workersIterator.next();
+                    assignToHarvest(worker);
+                }
+            }
         }
-    }
 
     private class Barracks {
         public Barracks() {
