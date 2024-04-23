@@ -33,19 +33,21 @@ public class HSBot extends AbstractionLayerAI {
             if (currentBase == null)
                 return;
 
-            // Ensure only one worker is trained
-            if (playerWorkers.size() < 1) {
+            int desiredWorkers = 1;
+
+            boolean needsWorkers = (playerWorkers.size() < desiredWorkers
+                    || playerWorkers.size() <= enemyWorkers.size()) && playerWorkers.size() < 5;
+
+            // Make sure we can afford a barracks while maintaining a worker
+            boolean enoughResources = player
+                    .getResources() >= (currentBarracks == null ? barracksType.cost + workerType.cost
+                            : workerType.cost);
+
+            if ((needsWorkers && enoughResources)) {
                 train(currentBase, workerType);
             }
-
-            // Assign two workers to harvest
-            if (playerWorkers.size() < 2) {
-                while (workersIterator.hasNext() && playerWorkers.size() < 2) {
-                    Unit worker = workersIterator.next();
-                    assignToHarvest(worker);
-                }
-            }
         }
+    }
 
     private class Barracks {
         public Barracks() {
@@ -57,14 +59,9 @@ public class HSBot extends AbstractionLayerAI {
         }
 
         private UnitType chooseUnit() {
-            // if (player.getResources() >= lightType.cost) { //only use lights and ranged
-            //     return lightType;
-            // } else if (player.getResources() >= rangedType.cost) {
-            //     return rangedType;
-            // }
+            
             return rangedType;
 
-            
         }
     }
 
@@ -132,7 +129,7 @@ public class HSBot extends AbstractionLayerAI {
 
         private void assignToHarvest(Unit worker) {
             Unit closestResource = findClosestWithin(resources, worker,
-                    (int) Math.floor(findAdjacentCells(resources).size() / 2));
+                    (int) Math.floor(findAdjacentCells(resources).size()));
             Unit closestBase = findClosest(playerBases, worker);
 
             if (closestResource != null && closestBase != null) {
@@ -160,42 +157,78 @@ public class HSBot extends AbstractionLayerAI {
     }
 
     private class Ranged {
-        private int groupSize = 4; // Number of ranged units per group
-        private int idleCounter = 0; // Counter to keep track of idle time
-        private boolean groupReady = false; // Flag to indicate if a group is ready to attack
+        private int groupSize = 3; // Number of ranged units per group
         private List<Unit> waitingRanged = new ArrayList<>(); // List to hold ranged units waiting at base
+        private boolean groupReady = false; // Flag to indicate if a group is ready to attack
     
         public Ranged() {
-            playerRanged.forEach(ranged -> {
-                if (waitingRanged.size() < groupSize) {
-                    waitingRanged.add(ranged);
-                    Unit closestEnemy = findClosest(enemyUnits, ranged);
-                    if (waitingRanged.size() == groupSize || closestEnemy != null) {
-                        groupReady = true; // Once group size is reached, set the flag to true 
-                    } 
-                } else {
-                    assignToAttack(ranged); // If the group is ready, send units to attack
-                }
-            });
-    
-            // If the group is ready and there are still units left, send them to attack
-            if (groupReady && !waitingRanged.isEmpty()) {
-                waitingRanged.forEach(this::assignToAttack);
-                waitingRanged.clear(); // Clear the waiting list after sending units to attack
-                groupReady = false; // Reset the group ready flag
-            }
-    
-            // If there are remaining units that haven't been assigned, keep them waiting
-            playerRanged.removeAll(waitingRanged);
+            // Group ranged units and initiate attacks
+            groupAndAttack();
         }
     
-        private void assignToAttack(Unit ranged) {
-            Unit closestEnemy = findClosest(enemyUnits, ranged);
-            if (closestEnemy != null) {
-                attack(ranged, closestEnemy);
-            } else {
-                // If no enemy nearby, keep the unit waiting
-                waitingRanged.add(ranged);
+        private void groupAndAttack() {
+            // Group ranged units into groups of 4
+            List<List<Unit>> groupedUnits = groupUnits(playerRanged, groupSize);
+            
+            // Iterate over each group
+            for (List<Unit> group : groupedUnits) {
+                // Wait in a group near the base
+                waitInGroup(group);
+                
+                // Attack with the group if ready
+                if (groupReady) {
+                    attackWithGroup(group);
+                    groupReady = false; // Reset group ready flag
+                }
+            }
+        }
+    
+        private List<List<Unit>> groupUnits(List<Unit> units, int groupSize) {
+            List<List<Unit>> groupedUnits = new ArrayList<>();
+            for (int i = 0; i < units.size(); i += groupSize) {
+                List<Unit> group = units.subList(i, Math.min(i + groupSize, units.size()));
+                groupedUnits.add(group);
+            }
+            return groupedUnits;
+        }
+    
+        private void waitInGroup(List<Unit> group) {
+            // Calculate the center position of the base
+            int baseX = currentBase.getX();
+            int baseY = currentBase.getY();
+        
+            // Calculate the position for the group to wait
+            int waitDistance = 3; // Distance away from the base
+            int directionX = baseX < physicalGameState.getWidth() / 2 ? 1 : -1; // Move away from the base horizontally
+        
+            // Calculate the starting position for the line
+            int startX = baseX + directionX * waitDistance;
+            int startY = baseY - (groupSize / 2);
+        
+            // Move each unit in the group to the waiting position
+            for (int i = 0; i < group.size(); i++) {
+                Unit ranged = group.get(i);
+                int waitX = startX;
+                int waitY = startY + i;
+                move(ranged, waitX, waitY);
+            }
+        
+            // Check if the group is ready to attack
+            if (group.size() == groupSize) {
+                groupReady = true;
+            }
+        }
+    
+        private void attackWithGroup(List<Unit> group) {
+            // Find the closest enemy for each unit in the group and attack
+            for (Unit ranged : group) {
+                Unit closestEnemy = findClosest(enemyUnits, ranged);
+                if (closestEnemy != null) {
+                    attack(ranged, closestEnemy);
+                } else {
+                    // If no enemy nearby, keep the unit waiting
+                    waitingRanged.add(ranged);
+                }
             }
         }
     }
