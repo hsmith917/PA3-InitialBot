@@ -91,11 +91,11 @@ public class HSBot extends AbstractionLayerAI {
 
             while (workersIterator.hasNext()) {
                 Unit worker = workersIterator.next();
-                assignToAttack(worker);
+                assign_to_attack(worker);
             }
         }
 
-        private void assignToAttack(Unit worker) {
+        private void assign_to_attack(Unit worker) {
             Unit closestEnemy = findClosest(enemyUnits, worker);
             if (closestEnemy != null)
                 attack(worker, closestEnemy);
@@ -145,11 +145,11 @@ public class HSBot extends AbstractionLayerAI {
     private class Light {
         public Light() {
             playerLights.forEach(light -> {
-                assignToAttack(light);
+                assign_to_attack(light);
             });
         }
 
-        private void assignToAttack(Unit light) {
+        private void assign_to_attack(Unit light) {
             Unit closestEnemy = findClosest(enemyUnits, light);
             if (closestEnemy != null)
                 attack(light, closestEnemy);
@@ -157,42 +157,41 @@ public class HSBot extends AbstractionLayerAI {
     }
 
     private class Ranged {
-        private int groupSize = 3; // Number of ranged units per group
-        private List<Unit> waitingRanged = new ArrayList<>(); // List to hold ranged units waiting at base
-        private boolean groupReady = false; // Flag to indicate if a group is ready to attack
+        private int group_size = 3; // Number of ranged units per group
+        private List<Unit> waiting_ranged = new ArrayList<>();
+        private boolean group_ready = false; 
     
         public Ranged() {
-            // Group ranged units and initiate attacks
-            groupAndAttack();
+            group_and_attack();
         }
     
-        private void groupAndAttack() {
+        private void group_and_attack() {
             // Group ranged units into groups of 3
-            List<List<Unit>> groupedUnits = groupUnits(playerRanged, groupSize);
+            List<List<Unit>> grouped_units = group_units(playerRanged, group_size);
             
             // Wait in group
-            for (List<Unit> group : groupedUnits) {
+            for (List<Unit> group : grouped_units) {
 
-                waitInGroup(group);
+                wait_in_group(group);
                 
                 // Group atack
-                if (groupReady) {
-                    attackWithGroup(group);
-                    groupReady = false; 
+                if (group_ready) {
+                    attack_with_group(group);
+                    group_ready = false; 
                 }
             }
         }
     
-        private List<List<Unit>> groupUnits(List<Unit> units, int groupSize) {
-            List<List<Unit>> groupedUnits = new ArrayList<>();
-            for (int i = 0; i < units.size(); i += groupSize) {
-                List<Unit> group = units.subList(i, Math.min(i + groupSize, units.size()));
-                groupedUnits.add(group);
+        private List<List<Unit>> group_units(List<Unit> units, int group_size) {
+            List<List<Unit>> grouped_units = new ArrayList<>();
+            for (int i = 0; i < units.size(); i += group_size) {
+                List<Unit> group = units.subList(i, Math.min(i + group_size, units.size()));
+                grouped_units.add(group);
             }
-            return groupedUnits;
+            return grouped_units;
         }
     
-        private void waitInGroup(List<Unit> group) {
+        private void wait_in_group(List<Unit> group) {
             int baseX = currentBase.getX();
             int baseY = currentBase.getY();
         
@@ -201,7 +200,7 @@ public class HSBot extends AbstractionLayerAI {
         
             // Calculate the starting position for the line
             int startX = baseX + directionX * waitDistance;
-            int startY = baseY - (groupSize / 2);
+            int startY = baseY - (group_size / 2);
         
             // Move each unit to wait position
             for (int i = 0; i < group.size(); i++) {
@@ -212,21 +211,21 @@ public class HSBot extends AbstractionLayerAI {
             }
         
             // Check if the group ready to attack
-            if (group.size() == groupSize) {
-                groupReady = true;
+            if (group.size() == group_size) {
+                group_ready = true;
             }
         }
     
-        private void attackWithGroup(List<Unit> group) {
+        private void attack_with_group(List<Unit> group) {
             // Find the closest enemy for each unit in the group and attack
             for (Unit ranged : group) {
-                Unit closestEnemy = findClosest(enemyUnits, ranged);
+                Unit closest_enemy = findClosest(enemyUnits, ranged);
 
-                if (closestEnemy != null) {
-                    attack(ranged, closestEnemy);
+                if (closest_enemy != null) {
+                    attack(ranged, closes_enemy);
 
                 } else {
-                    waitingRanged.add(ranged); // If no enemy nearby, keep waiting
+                    waiting_ranged.add(ranged); // If no enemy nearby, keep waiting
                 }
             }
         }
@@ -235,11 +234,11 @@ public class HSBot extends AbstractionLayerAI {
     private class Heavy {
         public Heavy() {
             playerHeavies.forEach(heavy -> {
-                assignToAttack(heavy);
+                assign_to_attack(heavy);
             });
         }
 
-        private void assignToAttack(Unit heavy) {
+        private void assign_to_attack(Unit heavy) {
             Unit closestEnemy = findClosest(enemyUnits, heavy);
             if (closestEnemy != null)
                 attack(heavy, closestEnemy);
