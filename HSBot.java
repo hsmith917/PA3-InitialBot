@@ -191,27 +191,33 @@ public class HSBot extends AbstractionLayerAI {
         }
     
         private void waitInGroup(List<Unit> group) {
-            int baseX = currentBase.getX();
-            int baseY = currentBase.getY();
+            if(currentBase.getHitPoints() != 0){ //throws errors so need to check 
+                int baseX = currentBase.getX();
+                int baseY = currentBase.getY();
+
+                int waitDistance = 4; 
+                int directionX = baseX < physicalGameState.getWidth() / 2 ? 1 : -1; //moves away from the base horizontally
             
-            int waitDistance = 4; 
-            int directionX = baseX < physicalGameState.getWidth() / 2 ? 1 : -1; //moves away from the base horizontally
+                int startX = baseX + directionX * waitDistance;
+                int startY = baseY - (groupSize / 2);
             
-            int startX = baseX + directionX * waitDistance;
-            int startY = baseY - (groupSize / 2);
-            
-            for (int i = 0; i < group.size(); i++) {
-                Unit ranged = group.get(i);
-                int waitX = startX;
-                int waitY = startY + i;
+                for (int i = 0; i < group.size(); i++) {
+                    Unit ranged = group.get(i);
+                    int waitX = startX;
+                    int waitY = startY + i;
                 
-                move(ranged, waitX, waitY);
+                    move(ranged, waitX, waitY);
             
-            }
+                }
             
-            if (group.size() == groupSize) {
-                groupReady = true;
+                if (group.size() == groupSize) {
+                    groupReady = true;
+                }
             }
+            else{
+                return;
+            }
+          
         }
     
         private void attackWithGroup(List<Unit> group) {
