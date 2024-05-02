@@ -191,7 +191,7 @@ public class HSBot extends AbstractionLayerAI {
         }
     
         private void waitInGroup(List<Unit> group) {
-            if(currentBase.getHitPoints() != 0){ //throws errors so need to check 
+            if(currentBase != null){ //throws errors so need to check 
                 int baseX = currentBase.getX();
                 int baseY = currentBase.getY();
 
@@ -215,7 +215,7 @@ public class HSBot extends AbstractionLayerAI {
                 }
             }
             else{
-                return;
+                groupReady = true;
             }
           
         }
